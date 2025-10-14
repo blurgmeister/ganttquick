@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GanttQuick - Simple Gantt Chart Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GanttQuick</h1>
+            <p>Simple Gantt Chart Tool with Excel Export</p>
+        </header>
+
+        <div id="app">
+            <!-- Step 1: Project Setup -->
+            <section class="card" id="step1">
+                <h2>1. Project Setup</h2>
+                <div class="form-group">
+                    <label>Project Name:</label>
+                    <input type="text" id="projectName" placeholder="Enter project name" required>
+                </div>
+                <div class="form-group">
+                    <label>Start Date:</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Global Holidays (comma-separated, YYYY-MM-DD):</label>
+                    <input type="text" id="globalHolidays" placeholder="2024-12-25, 2024-01-01">
+                </div>
+                <button onclick="createProject()" class="btn btn-primary">Create Project</button>
+            </section>
+
+            <!-- Step 2: Add Employees -->
+            <section class="card" id="step2" style="display:none;">
+                <h2>2. Add Employees</h2>
+                <div id="employeesList"></div>
+                <div class="form-group">
+                    <label>Employee Name:</label>
+                    <input type="text" id="employeeName" placeholder="Enter employee name">
+                </div>
+                <div class="form-group">
+                    <label>Work Pattern (select working days):</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="0" checked> Mon</label>
+                        <label><input type="checkbox" value="1" checked> Tue</label>
+                        <label><input type="checkbox" value="2" checked> Wed</label>
+                        <label><input type="checkbox" value="3" checked> Thu</label>
+                        <label><input type="checkbox" value="4" checked> Fri</label>
+                        <label><input type="checkbox" value="5"> Sat</label>
+                        <label><input type="checkbox" value="6"> Sun</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Individual Holidays (comma-separated, YYYY-MM-DD):</label>
+                    <input type="text" id="employeeHolidays" placeholder="2024-12-26">
+                </div>
+                <button onclick="addEmployee()" class="btn btn-secondary">Add Employee</button>
+                <button onclick="goToStep(3)" class="btn btn-primary">Continue to Tasks</button>
+            </section>
+
+            <!-- Step 3: Add Tasks -->
+            <section class="card" id="step3" style="display:none;">
+                <h2>3. Add Tasks</h2>
+                <div id="tasksList"></div>
+                <div class="form-group">
+                    <label>Task Name:</label>
+                    <input type="text" id="taskName" placeholder="Enter task name">
+                </div>
+                <div class="form-group">
+                    <label>Assigned To:</label>
+                    <select id="taskAssignedTo">
+                        <option value="">Select employee</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estimated Duration (days):</label>
+                    <input type="number" id="taskDuration" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Availability (%):</label>
+                    <input type="number" id="taskAvailability" min="1" max="100" value="100">
+                </div>
+                <div class="form-group">
+                    <label>Contingency Margin (%):</label>
+                    <input type="number" id="taskContingency" min="0" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Depends On (optional):</label>
+                    <select id="taskDependency">
+                        <option value="">No dependency</option>
+                    </select>
+                </div>
+                <button onclick="addTask()" class="btn btn-secondary">Add Task</button>
+                <button onclick="calculateAndView()" class="btn btn-primary">Calculate Schedule</button>
+            </section>
+
+            <!-- Step 4: View Gantt Chart -->
+            <section class="card" id="step4" style="display:none;">
+                <h2>4. Gantt Chart</h2>
+                <div class="actions">
+                    <button onclick="exportToExcel()" class="btn btn-success">Export to Excel</button>
+                    <button onclick="goToStep(3)" class="btn btn-secondary">Edit Tasks</button>
+                    <button onclick="resetProject()" class="btn btn-danger">Start New Project</button>
+                </div>
+                <div id="ganttContainer">
+                    <div id="ganttChart"></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
