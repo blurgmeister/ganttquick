@@ -122,6 +122,96 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     info_ws.column_dimensions['A'].width = 25
     info_ws.column_dimensions['B'].width = 25
 
+    # Add Work Schedules sheet
+    work_ws = wb.create_sheet("Work Schedules")
+    work_ws['A1'] = "Employee Name"
+    work_ws['A1'].font = Font(bold=True)
+    work_ws['A1'].fill = header_fill
+    work_ws['A1'].font = header_font
+    work_ws['A1'].alignment = Alignment(horizontal="center", vertical="center")
+    work_ws['A1'].border = border
+
+    # Days of week headers
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    for col_idx, day in enumerate(days_of_week, start=2):
+        cell = work_ws.cell(row=1, column=col_idx)
+        cell.value = day
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = border
+
+    # Add employee work patterns
+    for row_idx, (emp_name, employee) in enumerate(sorted(project.employees.items()), start=2):
+        work_ws.cell(row=row_idx, column=1).value = emp_name
+        work_ws.cell(row=row_idx, column=1).border = border
+        work_ws.cell(row=row_idx, column=1).alignment = Alignment(vertical="center")
+
+        # Mark working days with "X"
+        for day_num in range(7):  # 0=Monday, 6=Sunday
+            col = day_num + 2
+            cell = work_ws.cell(row=row_idx, column=col)
+            if day_num in employee.work_pattern:
+                cell.value = "X"
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = border
+
+    # Set column widths for Work Schedules
+    work_ws.column_dimensions['A'].width = 20
+    for col in range(2, 9):
+        work_ws.column_dimensions[work_ws.cell(row=1, column=col).column_letter].width = 12
+
+    # Add Holiday Schedule sheet
+    holiday_ws = wb.create_sheet("Holiday Schedule")
+    holiday_ws['A1'] = "Employee Name"
+    holiday_ws['A1'].font = Font(bold=True)
+    holiday_ws['A1'].fill = header_fill
+    holiday_ws['A1'].font = header_font
+    holiday_ws['A1'].alignment = Alignment(horizontal="center", vertical="center")
+    holiday_ws['A1'].border = border
+
+    holiday_ws['B1'] = "Holiday Dates"
+    holiday_ws['B1'].font = Font(bold=True)
+    holiday_ws['B1'].fill = header_fill
+    holiday_ws['B1'].font = header_font
+    holiday_ws['B1'].alignment = Alignment(horizontal="center", vertical="center")
+    holiday_ws['B1'].border = border
+
+    # Add global holidays first
+    holiday_ws['A2'] = "GLOBAL"
+    holiday_ws['A2'].font = Font(bold=True)
+    holiday_ws['A2'].border = border
+    holiday_ws['A2'].alignment = Alignment(vertical="center")
+
+    if project.global_holidays:
+        sorted_global_holidays = sorted(project.global_holidays)
+        holiday_ws.cell(row=2, column=2).value = ", ".join(sorted_global_holidays)
+    else:
+        holiday_ws.cell(row=2, column=2).value = "None"
+    holiday_ws.cell(row=2, column=2).border = border
+    holiday_ws.cell(row=2, column=2).alignment = Alignment(vertical="center", wrap_text=True)
+
+    # Add employee-specific holidays
+    row_idx = 3
+    for emp_name, employee in sorted(project.employees.items()):
+        holiday_ws.cell(row=row_idx, column=1).value = emp_name
+        holiday_ws.cell(row=row_idx, column=1).border = border
+        holiday_ws.cell(row=row_idx, column=1).alignment = Alignment(vertical="center")
+
+        if employee.holidays:
+            sorted_holidays = sorted(employee.holidays)
+            holiday_ws.cell(row=row_idx, column=2).value = ", ".join(sorted_holidays)
+        else:
+            holiday_ws.cell(row=row_idx, column=2).value = "None"
+        holiday_ws.cell(row=row_idx, column=2).border = border
+        holiday_ws.cell(row=row_idx, column=2).alignment = Alignment(vertical="center", wrap_text=True)
+        row_idx += 1
+
+    # Set column widths for Holiday Schedule
+    holiday_ws.column_dimensions['A'].width = 20
+    holiday_ws.column_dimensions['B'].width = 60
+
     # Save the file
     wb.save(filename)
     return filename
