@@ -100,6 +100,8 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
             date_str = date.strftime("%Y-%m-%d")
             if date_str in working_dates_set:
                 cell.fill = task_fill
+                cell.value = 1
+                cell.alignment = Alignment(horizontal="center", vertical="center")
 
     # Freeze panes (freeze first 6 columns and first 2 rows)
     ws.freeze_panes = ws.cell(row=3, column=7)
