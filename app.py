@@ -154,7 +154,7 @@ def get_gantt_data():
     return jsonify(response)
 
 
-@app.route('/api/export', methods=['GET'])
+@app.route('/api/export', methods=['POST'])
 def export_excel():
     """Export the Gantt chart to Excel."""
     global current_project
@@ -163,7 +163,22 @@ def export_excel():
         return jsonify({'error': 'Project not initialized'}), 400
 
     try:
-        filename = f"{current_project.name.replace(' ', '_')}_gantt.xlsx"
+        data = request.json
+        custom_filename = data.get('filename', '').strip()
+
+        # Use custom filename or default to project name
+        if custom_filename:
+            # Add .xlsx extension if not provided
+            if not custom_filename.endswith('.xlsx'):
+                filename = f"{custom_filename}.xlsx"
+            else:
+                filename = custom_filename
+        else:
+            filename = f"{current_project.name.replace(' ', '_')}_gantt.xlsx"
+
+        # Sanitize filename (remove potentially problematic characters)
+        filename = filename.replace('/', '_').replace('\\', '_')
+
         filepath = export_to_excel(current_project, filename)
         return send_file(filepath, as_attachment=True, download_name=filename)
     except Exception as e:

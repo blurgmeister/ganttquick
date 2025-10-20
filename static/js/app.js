@@ -314,15 +314,32 @@ function displayGanttChart(data) {
 
 // Export to Excel
 async function exportToExcel() {
+    // Prompt user for filename
+    const defaultFilename = document.getElementById('projectName').value.replace(/\s+/g, '_') + '_gantt';
+    const userFilename = prompt('Enter a name for the Excel file:', defaultFilename);
+
+    // If user cancels, return
+    if (userFilename === null) {
+        return;
+    }
+
+    // Use default if user enters empty string
+    const filename = userFilename.trim() || defaultFilename;
+
     try {
-        const response = await fetch('/api/export');
+        const response = await fetch('/api/export', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename })
+        });
 
         if (response.ok) {
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'gantt_chart.xlsx';
+            // Ensure .xlsx extension for download
+            a.download = filename.endsWith('.xlsx') ? filename : filename + '.xlsx';
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
