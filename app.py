@@ -138,7 +138,8 @@ def get_gantt_data():
             'dependency': task.dependency,
             'start_date': task.start_date.strftime('%Y-%m-%d') if task.start_date else None,
             'end_date': task.end_date.strftime('%Y-%m-%d') if task.end_date else None,
-            'working_dates': [d.strftime('%Y-%m-%d') for d in task.working_dates]
+            'working_dates': [d.strftime('%Y-%m-%d') for d in task.working_dates],
+            'holiday_dates': [d.strftime('%Y-%m-%d') for d in task.holiday_dates]
         }
         tasks_data.append(task_info)
 

@@ -74,6 +74,9 @@ def main():
         print(f"  Start Date: {task.start_date.strftime('%Y-%m-%d') if task.start_date else 'N/A'}")
         print(f"  End Date: {task.end_date.strftime('%Y-%m-%d') if task.end_date else 'N/A'}")
         print(f"  Working Days: {len(task.working_dates)}")
+        print(f"  Holiday Days: {len(task.holiday_dates)}")
+        if task.holiday_dates:
+            print(f"  Holiday Dates: {', '.join([d.strftime('%Y-%m-%d') for d in task.holiday_dates])}")
 
     # Export to Excel
     print("\n\nExporting to Excel...")

@@ -220,6 +220,10 @@ table.gantt-table tr:nth-child(even) {
     background: #4472C4;
 }
 
+.date-cell.holiday {
+    background: #FFC107;
+}
+
 .date-header {
     writing-mode: vertical-rl;
     transform: rotate(180deg);

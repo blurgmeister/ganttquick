@@ -298,11 +298,21 @@ function displayGanttChart(data) {
         html += `<td>${task.end_date || ''}</td>`;
 
         const workingDatesSet = new Set(task.working_dates);
+        const holidayDatesSet = new Set(task.holiday_dates);
 
         dates.forEach(date => {
             const dateStr = date.toISOString().split('T')[0];
             const isWorking = workingDatesSet.has(dateStr);
-            html += `<td class="date-cell ${isWorking ? 'working' : ''}"></td>`;
+            const isHoliday = holidayDatesSet.has(dateStr);
+
+            let cellClass = 'date-cell';
+            if (isWorking) {
+                cellClass += ' working';
+            } else if (isHoliday) {
+                cellClass += ' holiday';
+            }
+
+            html += `<td class="${cellClass}"></td>`;
         });
 
         html += '</tr>';

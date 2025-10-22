@@ -49,6 +49,7 @@ class Task:
         self.start_date: Optional[datetime] = None
         self.end_date: Optional[datetime] = None
         self.working_dates: List[datetime] = []
+        self.holiday_dates: List[datetime] = []  # Holiday dates within task's date range
 
     def calculate_actual_duration(self) -> int:
         """Calculate actual duration based on availability and contingency margin."""
@@ -103,12 +104,21 @@ class Project:
         # Count working days until we reach actual_duration
         working_days_count = 0
         task.working_dates = []
+        task.holiday_dates = []
 
         while working_days_count < task.actual_duration:
+            date_str = current_date.strftime('%Y-%m-%d')
+            # Check if it's a holiday (global or personal for this employee)
+            is_holiday = date_str in self.global_holidays or date_str in employee.holidays
+
             if employee.is_working_day(current_date, self.global_holidays):
                 task.working_dates.append(current_date)
                 working_days_count += 1
                 task.end_date = current_date
+            elif is_holiday and current_date.weekday() in employee.work_pattern:
+                # It's a holiday on what would be a working day for this employee
+                task.holiday_dates.append(current_date)
+
             current_date += timedelta(days=1)
 
     def calculate_schedule(self):

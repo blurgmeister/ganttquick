@@ -15,6 +15,7 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
     task_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    holiday_fill = PatternFill(start_color="FFC107", end_color="FFC107", fill_type="solid")
     border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -96,8 +97,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
             ws.cell(row=task_idx, column=col).border = border
             ws.cell(row=task_idx, column=col).alignment = Alignment(vertical="center")
 
-        # Date columns - highlight working days
+        # Date columns - highlight working days and holidays
         working_dates_set = {d.strftime("%Y-%m-%d") for d in task.working_dates}
+        holiday_dates_set = {d.strftime("%Y-%m-%d") for d in task.holiday_dates}
         for idx, date in enumerate(date_list):
             col = col_offset + idx
             cell = ws.cell(row=task_idx, column=col)
@@ -107,6 +109,10 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
             if date_str in working_dates_set:
                 cell.fill = task_fill
                 cell.value = 1
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            elif date_str in holiday_dates_set:
+                cell.fill = holiday_fill
+                cell.value = 0
                 cell.alignment = Alignment(horizontal="center", vertical="center")
 
     # Freeze panes (freeze first 9 columns and first 2 rows)
