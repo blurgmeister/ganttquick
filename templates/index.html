@@ -48,6 +48,7 @@
                         <input type="text" id="globalHolidays" placeholder="2024-12-25, 2024-01-01">
                     </div>
                     <button onclick="createProject()" class="btn btn-primary">Create Project</button>
+                    <button onclick="goToStep(2)" class="btn btn-secondary" id="nextToStep2" style="display:none;">Next: Add Employees</button>
                 </div>
             </section>
 
@@ -76,7 +77,10 @@
                     <input type="text" id="employeeHolidays" placeholder="2024-12-26">
                 </div>
                 <button onclick="addEmployee()" class="btn btn-secondary">Add Employee</button>
-                <button onclick="goToStep(3)" class="btn btn-primary">Continue to Tasks</button>
+                <div class="button-group" style="margin-top: 20px;">
+                    <button onclick="goToStep(1)" class="btn">Back: Project Setup</button>
+                    <button onclick="goToStep(3)" class="btn btn-primary">Next: Add Tasks</button>
+                </div>
             </section>
 
             <!-- Step 3: Add Tasks -->
@@ -116,15 +120,21 @@
                     <input type="date" id="taskCustomStartDate">
                 </div>
                 <button onclick="addTask()" class="btn btn-secondary">Add Task</button>
-                <button onclick="calculateAndView()" class="btn btn-primary">Calculate Schedule</button>
+                <div class="button-group" style="margin-top: 20px;">
+                    <button onclick="goToStep(2)" class="btn">Back: Add Employees</button>
+                    <button onclick="calculateAndView()" class="btn btn-primary">Calculate Schedule</button>
+                </div>
             </section>
 
             <!-- Step 4: View Gantt Chart -->
             <section class="card" id="step4" style="display:none;">
                 <h2>4. Gantt Chart</h2>
                 <div class="actions">
+                    <button onclick="recalculateSchedule()" class="btn btn-primary">Recalculate Schedule</button>
+                    <button onclick="goToStep(3)" class="btn">Back: Edit Tasks</button>
+                    <button onclick="goToStep(2)" class="btn">Edit Employees</button>
+                    <button onclick="goToStep(1)" class="btn">Edit Project Setup</button>
                     <button onclick="exportToExcel()" class="btn btn-success">Export to Excel</button>
-                    <button onclick="goToStep(3)" class="btn btn-secondary">Edit Tasks</button>
                     <button onclick="resetProject()" class="btn btn-danger">Start New Project</button>
                 </div>
                 <div id="ganttContainer">

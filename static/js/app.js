@@ -3,6 +3,7 @@ let employees = [];
 let tasks = [];
 let currentStep = 1;
 let dataAlreadySubmitted = false; // Track if employees/tasks already submitted to backend
+let projectCreated = false; // Track if project has been created
 
 // Utility functions
 function showMessage(message, type = 'success') {
@@ -22,6 +23,14 @@ function goToStep(step) {
     // Show requested step
     document.getElementById(`step${step}`).style.display = 'block';
     currentStep = step;
+
+    // Update step 1 button text based on whether project exists
+    if (step === 1 && projectCreated) {
+        const createBtn = document.querySelector('#step1 .btn-primary');
+        if (createBtn) {
+            createBtn.textContent = 'Update Project';
+        }
+    }
 }
 
 // Step 1: Create Project
@@ -49,7 +58,19 @@ async function createProject() {
         const data = await response.json();
 
         if (response.ok) {
-            showMessage('Project created successfully!', 'success');
+            const wasUpdating = projectCreated;
+            projectCreated = true;
+            document.getElementById('nextToStep2').style.display = 'inline-block';
+
+            if (wasUpdating) {
+                showMessage('Project updated successfully!', 'success');
+                // If we have employees/tasks already, mark them for resubmission
+                if (employees.length > 0 || tasks.length > 0) {
+                    dataAlreadySubmitted = false;
+                }
+            } else {
+                showMessage('Project created successfully!', 'success');
+            }
             goToStep(2);
         } else {
             showMessage(data.error || 'Error creating project', 'error');
@@ -94,14 +115,56 @@ function addEmployee() {
 
 function updateEmployeesList() {
     const list = document.getElementById('employeesList');
-    list.innerHTML = employees.map(emp =>
-        `<span class="item-badge">${emp.name}</span>`
-    ).join('');
+
+    if (employees.length === 0) {
+        list.innerHTML = '<p style="color: #666; font-style: italic;">No employees added yet.</p>';
+    } else {
+        list.innerHTML = employees.map((emp, idx) =>
+            `<div class="item-badge" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span>${emp.name} (Works: ${emp.work_pattern.map(d => ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d]).join(', ')})</span>
+                <div>
+                    <button onclick="editEmployee(${idx})" class="btn-small" style="margin-left: 5px;">Edit</button>
+                    <button onclick="deleteEmployee(${idx})" class="btn-small btn-danger" style="margin-left: 5px;">Delete</button>
+                </div>
+            </div>`
+        ).join('');
+    }
 
     // Update task assignment dropdown
     const select = document.getElementById('taskAssignedTo');
     select.innerHTML = '<option value="">Select employee</option>' +
         employees.map(emp => `<option value="${emp.name}">${emp.name}</option>`).join('');
+}
+
+function editEmployee(idx) {
+    const emp = employees[idx];
+
+    // Populate the form with employee data
+    document.getElementById('employeeName').value = emp.name;
+    document.getElementById('employeeHolidays').value = emp.holidays.join(', ');
+
+    // Check the appropriate work pattern checkboxes
+    const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        cb.checked = emp.work_pattern.includes(parseInt(cb.value));
+    });
+
+    // Remove the employee from the array (will be re-added when user clicks "Add Employee")
+    employees.splice(idx, 1);
+    dataAlreadySubmitted = false; // Mark that data needs to be resubmitted
+    updateEmployeesList();
+
+    showMessage('Edit employee details and click "Add Employee" to save changes', 'info');
+}
+
+function deleteEmployee(idx) {
+    const emp = employees[idx];
+    if (confirm(`Are you sure you want to delete employee "${emp.name}"?`)) {
+        employees.splice(idx, 1);
+        dataAlreadySubmitted = false; // Mark that data needs to be resubmitted
+        updateEmployeesList();
+        showMessage(`Employee "${emp.name}" deleted`, 'success');
+    }
 }
 
 async function submitEmployees() {
@@ -184,14 +247,55 @@ function addTask() {
 
 function updateTasksList() {
     const list = document.getElementById('tasksList');
-    list.innerHTML = tasks.map((task, idx) =>
-        `<div class="item-badge">${idx + 1}. ${task.name} (${task.assigned_to}, ${task.estimated_duration}d)</div>`
-    ).join('');
+
+    if (tasks.length === 0) {
+        list.innerHTML = '<p style="color: #666; font-style: italic;">No tasks added yet.</p>';
+    } else {
+        list.innerHTML = tasks.map((task, idx) =>
+            `<div class="item-badge" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span>${idx + 1}. ${task.name} (${task.assigned_to}, ${task.estimated_duration}d, ${task.availability}% avail.)</span>
+                <div>
+                    <button onclick="editTask(${idx})" class="btn-small" style="margin-left: 5px;">Edit</button>
+                    <button onclick="deleteTask(${idx})" class="btn-small btn-danger" style="margin-left: 5px;">Delete</button>
+                </div>
+            </div>`
+        ).join('');
+    }
 
     // Update dependency dropdown
     const select = document.getElementById('taskDependency');
     select.innerHTML = '<option value="">No dependency</option>' +
         tasks.map(task => `<option value="${task.name}">${task.name}</option>`).join('');
+}
+
+function editTask(idx) {
+    const task = tasks[idx];
+
+    // Populate the form with task data
+    document.getElementById('taskName').value = task.name;
+    document.getElementById('taskAssignedTo').value = task.assigned_to;
+    document.getElementById('taskDuration').value = task.estimated_duration;
+    document.getElementById('taskAvailability').value = task.availability;
+    document.getElementById('taskContingency').value = task.contingency_margin;
+    document.getElementById('taskDependency').value = task.dependency || '';
+    document.getElementById('taskCustomStartDate').value = task.custom_start_date || '';
+
+    // Remove the task from the array (will be re-added when user clicks "Add Task")
+    tasks.splice(idx, 1);
+    dataAlreadySubmitted = false; // Mark that data needs to be resubmitted
+    updateTasksList();
+
+    showMessage('Edit task details and click "Add Task" to save changes', 'info');
+}
+
+function deleteTask(idx) {
+    const task = tasks[idx];
+    if (confirm(`Are you sure you want to delete task "${task.name}"?`)) {
+        tasks.splice(idx, 1);
+        dataAlreadySubmitted = false; // Mark that data needs to be resubmitted
+        updateTasksList();
+        showMessage(`Task "${task.name}" deleted`, 'success');
+    }
 }
 
 async function submitTasks() {
@@ -274,6 +378,13 @@ function displayGanttChart(data) {
         currentDate.setDate(currentDate.getDate() + 1);
     }
 
+    // Sort tasks by start date (earliest first)
+    const sortedTasks = [...data.tasks].sort((a, b) => {
+        if (!a.start_date) return 1;  // Tasks without start date go to end
+        if (!b.start_date) return -1;
+        return new Date(a.start_date) - new Date(b.start_date);
+    });
+
     // Build table
     let html = '<table class="gantt-table">';
 
@@ -295,7 +406,7 @@ function displayGanttChart(data) {
     html += '</tr>';
 
     // Task rows
-    data.tasks.forEach(task => {
+    sortedTasks.forEach(task => {
         html += '<tr>';
         html += `<td>${task.name}</td>`;
         html += `<td>${task.assigned_to}</td>`;
@@ -327,6 +438,15 @@ function displayGanttChart(data) {
 
     html += '</table>';
     container.innerHTML = html;
+}
+
+// Recalculate schedule (for use on Step 4)
+async function recalculateSchedule() {
+    // Always resubmit employees and tasks to ensure backend has latest data
+    dataAlreadySubmitted = false;
+
+    // Call calculateAndView but stay on step 4
+    await calculateAndView();
 }
 
 // Export to Excel
@@ -384,11 +504,23 @@ async function resetProject() {
         tasks = [];
         currentStep = 1;
         dataAlreadySubmitted = false; // Reset flag
+        projectCreated = false; // Reset flag
 
         // Clear all forms
         document.getElementById('projectName').value = '';
-        document.getElementById('startDate').value = '';
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('startDate').value = today;
         document.getElementById('globalHolidays').value = '';
+        document.getElementById('nextToStep2').style.display = 'none';
+
+        // Reset button text
+        const createBtn = document.querySelector('#step1 .btn-primary');
+        if (createBtn) {
+            createBtn.textContent = 'Create Project';
+        }
+
+        updateEmployeesList();
+        updateTasksList();
 
         goToStep(1);
         showMessage('Project reset successfully!', 'success');
@@ -516,6 +648,10 @@ async function populateFromImport(data) {
 
     // Mark data as already submitted since we sent it to backend
     dataAlreadySubmitted = true;
+    projectCreated = true;
+
+    // Show the next button on step 1
+    document.getElementById('nextToStep2').style.display = 'inline-block';
 
     // Navigate to step 3 (tasks) so user can edit
     goToStep(3);

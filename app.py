@@ -56,6 +56,9 @@ def add_employees():
     data = request.json
     employees_data = data.get('employees', [])
 
+    # Clear existing employees to avoid duplicates when resubmitting
+    current_project.employees.clear()
+
     for emp_data in employees_data:
         emp = Employee(emp_data['name'])
 
@@ -83,6 +86,9 @@ def add_tasks():
 
     data = request.json
     tasks_data = data.get('tasks', [])
+
+    # Clear existing tasks to avoid duplicates when resubmitting
+    current_project.tasks.clear()
 
     for task_data in tasks_data:
         task = Task(
