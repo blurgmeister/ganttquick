@@ -326,6 +326,9 @@ async function submitTasks() {
 }
 
 async function calculateAndView() {
+    // Always resubmit employees and tasks to ensure backend has latest data
+    dataAlreadySubmitted = false;
+
     // Submit employees and tasks if not already done
     if (!dataAlreadySubmitted) {
         if (!(await submitEmployees())) return;
@@ -440,14 +443,6 @@ function displayGanttChart(data) {
     container.innerHTML = html;
 }
 
-// Recalculate schedule (for use on Step 4)
-async function recalculateSchedule() {
-    // Always resubmit employees and tasks to ensure backend has latest data
-    dataAlreadySubmitted = false;
-
-    // Call calculateAndView but stay on step 4
-    await calculateAndView();
-}
 
 // Export to Excel
 async function exportToExcel() {
