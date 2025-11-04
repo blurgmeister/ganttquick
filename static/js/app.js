@@ -2,6 +2,7 @@
 let employees = [];
 let tasks = [];
 let currentStep = 1;
+let dataAlreadySubmitted = false; // Track if employees/tasks already submitted to backend
 
 // Utility functions
 function showMessage(message, type = 'success') {
@@ -222,8 +223,11 @@ async function submitTasks() {
 
 async function calculateAndView() {
     // Submit employees and tasks if not already done
-    if (!(await submitEmployees())) return;
-    if (!(await submitTasks())) return;
+    if (!dataAlreadySubmitted) {
+        if (!(await submitEmployees())) return;
+        if (!(await submitTasks())) return;
+        dataAlreadySubmitted = true; // Mark as submitted
+    }
 
     try {
         // Calculate schedule
@@ -379,6 +383,7 @@ async function resetProject() {
         employees = [];
         tasks = [];
         currentStep = 1;
+        dataAlreadySubmitted = false; // Reset flag
 
         // Clear all forms
         document.getElementById('projectName').value = '';
@@ -392,9 +397,126 @@ async function resetProject() {
     }
 }
 
-// Initialize
+// File import handling
 document.addEventListener('DOMContentLoaded', () => {
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('startDate').value = today;
+
+    // Handle file selection
+    document.getElementById('importFile').addEventListener('change', function() {
+        const fileName = this.files.length > 0 ? this.files[0].name : '';
+        document.getElementById('importFileName').textContent = fileName;
+        document.getElementById('importBtn').disabled = !fileName;
+    });
 });
+
+// Import project from Excel file
+async function importProject() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showMessage('Please select a file to import', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        showMessage('Importing project...', 'info');
+
+        const response = await fetch('/api/import', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            showMessage(data.error || 'Error importing file', 'error');
+            return;
+        }
+
+        // Successfully imported - populate the app
+        await populateFromImport(data);
+
+        showMessage('Project imported successfully! You can now edit and continue.', 'success');
+
+    } catch (error) {
+        showMessage('Network error: ' + error.message, 'error');
+    }
+}
+
+// Populate app state from imported data
+async function populateFromImport(data) {
+    // Reset current state
+    employees = [];
+    tasks = [];
+
+    // Step 1: Create project with imported info
+    const projectInfo = data.project_info;
+    document.getElementById('projectName').value = projectInfo.name;
+    document.getElementById('startDate').value = projectInfo.start_date;
+
+    if (projectInfo.global_holidays && projectInfo.global_holidays.length > 0) {
+        document.getElementById('globalHolidays').value = projectInfo.global_holidays.join(', ');
+    } else {
+        document.getElementById('globalHolidays').value = '';
+    }
+
+    // Create the project on backend
+    const projectResponse = await fetch('/api/project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: projectInfo.name,
+            start_date: projectInfo.start_date,
+            global_holidays: projectInfo.global_holidays || []
+        })
+    });
+
+    if (!projectResponse.ok) {
+        const errorData = await projectResponse.json();
+        throw new Error(errorData.error || 'Failed to create project');
+    }
+
+    // Step 2: Add employees
+    employees = data.employees;
+    updateEmployeesList();
+
+    // Submit employees to backend
+    const employeesResponse = await fetch('/api/employees', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employees })
+    });
+
+    if (!employeesResponse.ok) {
+        const errorData = await employeesResponse.json();
+        throw new Error(errorData.error || 'Failed to add employees');
+    }
+
+    // Step 3: Add tasks
+    tasks = data.tasks;
+    updateTasksList();
+
+    // Submit tasks to backend
+    const tasksResponse = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tasks })
+    });
+
+    if (!tasksResponse.ok) {
+        const errorData = await tasksResponse.json();
+        throw new Error(errorData.error || 'Failed to add tasks');
+    }
+
+    // Mark data as already submitted since we sent it to backend
+    dataAlreadySubmitted = true;
+
+    // Navigate to step 3 (tasks) so user can edit
+    goToStep(3);
+}

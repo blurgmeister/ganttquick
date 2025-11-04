@@ -44,6 +44,7 @@ ganttquick/
 ├── app.py                 # Flask application with REST API
 ├── models.py              # Data models (Project, Task, Employee)
 ├── excel_export.py        # Excel export functionality
+├── excel_import.py        # Excel import functionality (NEW)
 ├── requirements.txt       # Python dependencies
 ├── templates/
 │   └── index.html        # Main UI (4-step wizard)
@@ -68,11 +69,19 @@ ganttquick/
    - `/api/calculate` - Calculate schedule
    - `/api/gantt` - Get chart data
    - `/api/export` - Export to Excel
+   - `/api/import` - Import from Excel (NEW)
+   - `/api/reset` - Reset current project
 
 3. **excel_export.py**: Excel generation
    - Creates formatted Gantt chart with colored cells
-   - Includes project info sheet
+   - Includes 4 sheets: Gantt Chart, Project Info, Work Schedules, Holiday Schedule
    - Freezes header rows/columns for easy navigation
+
+4. **excel_import.py**: Excel import (NEW)
+   - Validates required tabs (Gantt Chart, Project Info, Work Schedules)
+   - Optionally reads Holiday Schedule tab if present
+   - Extracts project info, employees, tasks, and all configuration
+   - Provides detailed error messages for validation failures
 
 ### Running the Application
 
@@ -89,8 +98,14 @@ python app.py
 ### Testing
 
 ```bash
-# Run test example
+# Run original test example
 python test_example.py
+
+# Test import functionality
+python test_import.py
+
+# Test import error handling
+python test_import_errors.py
 ```
 
 ### Features Implemented
@@ -109,6 +124,12 @@ All required features have been implemented:
 - Work schedule and holiday adjustment
 - Visual Gantt chart with task details
 - Excel export with formatted chart and highlighted working days
+- **Excel import functionality (NEW)**:
+  - Import previously exported Excel files
+  - Validates file structure (required tabs: Gantt Chart, Project Info, Work Schedules)
+  - Extracts all project data including tasks, employees, schedules, and holidays
+  - Allows users to continue editing imported projects
+  - Comprehensive error handling and validation
 
 ### Design Patterns
 

@@ -134,6 +134,12 @@ header p {
 #employeesList,
 #tasksList {
     margin-bottom: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    background: #f9f9f9;
 }
 
 .item-badge {
@@ -230,4 +236,50 @@ table.gantt-table tr:nth-child(even) {
     font-size: 11px;
     padding: 5px 4px !important;
     min-width: 25px;
+}
+
+/* Import and Create sections */
+.import-section,
+.create-section {
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.import-section {
+    background: #f0f7ff;
+    border: 2px solid #667eea;
+}
+
+.create-section {
+    background: #f9f9f9;
+    border: 2px solid #e0e0e0;
+}
+
+.import-section h3,
+.create-section h3 {
+    color: #667eea;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.import-section p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.message.info {
+    background: #17a2b8;
+    color: white;
+    display: block;
 }

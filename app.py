@@ -2,10 +2,14 @@ from flask import Flask, render_template, request, jsonify, send_file
 from datetime import datetime
 import json
 import os
+from werkzeug.utils import secure_filename
 from models import Project, Task, Employee
 from excel_export import export_to_excel
+from excel_import import import_from_excel, ExcelImportError
 
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['UPLOAD_FOLDER'] = '/tmp'
 
 # In-memory storage for the current project
 current_project = None
@@ -200,6 +204,47 @@ def reset_project():
     global current_project
     current_project = None
     return jsonify({'message': 'Project reset successfully'})
+
+
+@app.route('/api/import', methods=['POST'])
+def import_excel():
+    """Import project data from an uploaded Excel file."""
+    global current_project
+
+    # Check if file was uploaded
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    if not file.filename.endswith('.xlsx'):
+        return jsonify({'error': 'File must be an Excel file (.xlsx)'}), 400
+
+    try:
+        # Save uploaded file temporarily
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        # Parse the Excel file
+        data = import_from_excel(filepath)
+
+        # Clean up temporary file
+        try:
+            os.remove(filepath)
+        except Exception:
+            pass  # Ignore cleanup errors
+
+        # Return the extracted data to the frontend
+        return jsonify(data), 200
+
+    except ExcelImportError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Failed to import file: {str(e)}'}), 500
 
 
 if __name__ == '__main__':

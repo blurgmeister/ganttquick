@@ -17,19 +17,38 @@
             <!-- Step 1: Project Setup -->
             <section class="card" id="step1">
                 <h2>1. Project Setup</h2>
-                <div class="form-group">
-                    <label>Project Name:</label>
-                    <input type="text" id="projectName" placeholder="Enter project name" required>
+
+                <!-- Import Option -->
+                <div class="import-section">
+                    <h3>Import Existing Project</h3>
+                    <p>Load a previously exported Excel file to continue editing:</p>
+                    <div class="form-group">
+                        <input type="file" id="importFile" accept=".xlsx" style="display: none;">
+                        <button onclick="document.getElementById('importFile').click()" class="btn btn-secondary">Choose Excel File</button>
+                        <span id="importFileName" style="margin-left: 10px; color: #666;"></span>
+                    </div>
+                    <button onclick="importProject()" class="btn btn-success" id="importBtn" disabled>Import Project</button>
                 </div>
-                <div class="form-group">
-                    <label>Start Date:</label>
-                    <input type="date" id="startDate" required>
+
+                <div style="text-align: center; margin: 20px 0; color: #999; font-weight: bold;">OR</div>
+
+                <!-- Create New Project -->
+                <div class="create-section">
+                    <h3>Create New Project</h3>
+                    <div class="form-group">
+                        <label>Project Name:</label>
+                        <input type="text" id="projectName" placeholder="Enter project name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date:</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Global Holidays (comma-separated, YYYY-MM-DD):</label>
+                        <input type="text" id="globalHolidays" placeholder="2024-12-25, 2024-01-01">
+                    </div>
+                    <button onclick="createProject()" class="btn btn-primary">Create Project</button>
                 </div>
-                <div class="form-group">
-                    <label>Global Holidays (comma-separated, YYYY-MM-DD):</label>
-                    <input type="text" id="globalHolidays" placeholder="2024-12-25, 2024-01-01">
-                </div>
-                <button onclick="createProject()" class="btn btn-primary">Create Project</button>
             </section>
 
             <!-- Step 2: Add Employees -->
