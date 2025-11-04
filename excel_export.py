@@ -36,7 +36,7 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
         current += timedelta(days=1)
 
     # Header row 1: Fixed columns
-    headers = ["Task Name", "Depends On", "Assigned To", "Estimated Duration", "Availability (%)", "Contingency (%)", "Actual Duration", "Start Date", "End Date"]
+    headers = ["Task Name", "Depends On", "Assigned To", "Estimated Duration", "Availability (%)", "Contingency (%)", "Actual Duration", "Custom Start Date", "Start Date", "End Date"]
     col_offset = len(headers) + 1  # +1 for spacing
 
     for col_idx, header in enumerate(headers, start=1):
@@ -76,8 +76,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     ws.column_dimensions['E'].width = 15  # Availability (%)
     ws.column_dimensions['F'].width = 15  # Contingency (%)
     ws.column_dimensions['G'].width = 15  # Actual Duration
-    ws.column_dimensions['H'].width = 12  # Start Date
-    ws.column_dimensions['I'].width = 12  # End Date
+    ws.column_dimensions['H'].width = 15  # Custom Start Date
+    ws.column_dimensions['I'].width = 12  # Start Date
+    ws.column_dimensions['J'].width = 12  # End Date
 
     # Data rows
     for task_idx, task in enumerate(project.tasks, start=3):
@@ -89,11 +90,12 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
         ws.cell(row=task_idx, column=5).value = task.availability
         ws.cell(row=task_idx, column=6).value = task.contingency_margin
         ws.cell(row=task_idx, column=7).value = task.actual_duration
-        ws.cell(row=task_idx, column=8).value = task.start_date.strftime("%Y-%m-%d") if task.start_date else ""
-        ws.cell(row=task_idx, column=9).value = task.end_date.strftime("%Y-%m-%d") if task.end_date else ""
+        ws.cell(row=task_idx, column=8).value = task.custom_start_date.strftime("%Y-%m-%d") if task.custom_start_date else ""
+        ws.cell(row=task_idx, column=9).value = task.start_date.strftime("%Y-%m-%d") if task.start_date else ""
+        ws.cell(row=task_idx, column=10).value = task.end_date.strftime("%Y-%m-%d") if task.end_date else ""
 
         # Apply borders to fixed columns
-        for col in range(1, 10):
+        for col in range(1, 11):
             ws.cell(row=task_idx, column=col).border = border
             ws.cell(row=task_idx, column=col).alignment = Alignment(vertical="center")
 
@@ -114,9 +116,6 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
                 cell.fill = holiday_fill
                 cell.value = 0
                 cell.alignment = Alignment(horizontal="center", vertical="center")
-
-    # Freeze panes (freeze first 9 columns and first 2 rows)
-    ws.freeze_panes = ws.cell(row=3, column=10)
 
     # Add project info sheet
     info_ws = wb.create_sheet("Project Info")

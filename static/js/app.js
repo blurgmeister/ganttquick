@@ -138,6 +138,7 @@ function addTask() {
     const availability = parseInt(document.getElementById('taskAvailability').value);
     const contingencyMargin = parseInt(document.getElementById('taskContingency').value);
     const dependency = document.getElementById('taskDependency').value;
+    const customStartDate = document.getElementById('taskCustomStartDate').value;
 
     if (!name || !assignedTo || !estimatedDuration) {
         showMessage('Please fill in all required fields', 'error');
@@ -160,7 +161,8 @@ function addTask() {
         estimated_duration: estimatedDuration,
         availability,
         contingency_margin: contingencyMargin,
-        dependency: dependency || null
+        dependency: dependency || null,
+        custom_start_date: customStartDate || null
     };
 
     tasks.push(task);
@@ -174,6 +176,7 @@ function addTask() {
     document.getElementById('taskAvailability').value = '100';
     document.getElementById('taskContingency').value = '0';
     document.getElementById('taskDependency').value = '';
+    document.getElementById('taskCustomStartDate').value = '';
 
     showMessage(`Task "${name}" added!`, 'success');
 }

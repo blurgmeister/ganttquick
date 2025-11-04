@@ -94,6 +94,13 @@ def add_tasks():
         task.availability = task_data.get('availability', 100)
         task.contingency_margin = task_data.get('contingency_margin', 0)
 
+        # Set custom start date if provided
+        if 'custom_start_date' in task_data and task_data['custom_start_date']:
+            try:
+                task.custom_start_date = datetime.strptime(task_data['custom_start_date'], '%Y-%m-%d')
+            except (ValueError, TypeError):
+                return jsonify({'error': f'Invalid custom start date for task "{task.name}". Use YYYY-MM-DD format'}), 400
+
         current_project.add_task(task)
 
     return jsonify({'message': f'{len(tasks_data)} task(s) added successfully'})
@@ -136,6 +143,7 @@ def get_gantt_data():
             'availability': task.availability,
             'contingency_margin': task.contingency_margin,
             'dependency': task.dependency,
+            'custom_start_date': task.custom_start_date.strftime('%Y-%m-%d') if task.custom_start_date else None,
             'start_date': task.start_date.strftime('%Y-%m-%d') if task.start_date else None,
             'end_date': task.end_date.strftime('%Y-%m-%d') if task.end_date else None,
             'working_dates': [d.strftime('%Y-%m-%d') for d in task.working_dates],

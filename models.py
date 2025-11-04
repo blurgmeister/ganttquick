@@ -43,6 +43,7 @@ class Task:
         self.dependency: Optional[str] = None  # name of antecedent task
         self.availability: int = 100  # percentage (1-100)
         self.contingency_margin: int = 0  # percentage (0+)
+        self.custom_start_date: Optional[datetime] = None  # custom start date (overrides dependency)
 
         # Calculated fields
         self.actual_duration: int = 0
@@ -97,9 +98,14 @@ class Project:
         # Calculate actual duration
         task.actual_duration = task.calculate_actual_duration()
 
-        # Find the first working day from earliest_start
-        current_date = self.get_next_working_day(employee, earliest_start)
-        task.start_date = current_date
+        # If task has custom start date, use it exactly; otherwise find next working day
+        if task.custom_start_date:
+            current_date = earliest_start
+            task.start_date = current_date
+        else:
+            # Find the first working day from earliest_start
+            current_date = self.get_next_working_day(employee, earliest_start)
+            task.start_date = current_date
 
         # Count working days until we reach actual_duration
         working_days_count = 0
@@ -137,8 +143,12 @@ class Project:
                 if task.name in scheduled_tasks:
                     continue
 
+                # Check if task has a custom start date
+                if task.custom_start_date:
+                    # Use custom start date, ignore dependency
+                    earliest_start = task.custom_start_date
                 # Check if dependency is met
-                if task.dependency:
+                elif task.dependency:
                     if task.dependency not in task_map:
                         raise ValueError(f"Dependency '{task.dependency}' not found for task '{task.name}'")
 
