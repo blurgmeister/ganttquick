@@ -98,19 +98,15 @@ class Project:
         # Calculate actual duration
         task.actual_duration = task.calculate_actual_duration()
 
-        # If task has custom start date, use it exactly; otherwise find next working day
-        if task.custom_start_date:
-            current_date = earliest_start
-            task.start_date = current_date
-        else:
-            # Find the first working day from earliest_start
-            current_date = self.get_next_working_day(employee, earliest_start)
-            task.start_date = current_date
+        # Start iterating from earliest_start to capture all holidays
+        current_date = earliest_start
 
         # Count working days until we reach actual_duration
         working_days_count = 0
         task.working_dates = []
         task.holiday_dates = []
+        task.start_date = None
+        task.end_date = None
 
         while working_days_count < task.actual_duration:
             date_str = current_date.strftime('%Y-%m-%d')
@@ -118,6 +114,10 @@ class Project:
             is_holiday = date_str in self.global_holidays or date_str in employee.holidays
 
             if employee.is_working_day(current_date, self.global_holidays):
+                # Set start_date on the first working day
+                if task.start_date is None:
+                    task.start_date = current_date
+
                 task.working_dates.append(current_date)
                 working_days_count += 1
                 task.end_date = current_date
