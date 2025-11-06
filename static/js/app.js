@@ -15,6 +15,30 @@ function showMessage(message, type = 'success') {
     }, 3000);
 }
 
+// Convert dd/mm/yyyy to YYYY-MM-DD
+function convertToISODate(ddmmyyyy) {
+    const parts = ddmmyyyy.trim().split('/');
+    if (parts.length !== 3) {
+        throw new Error(`Invalid date format: ${ddmmyyyy}. Expected dd/mm/yyyy`);
+    }
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+    return `${year}-${month}-${day}`;
+}
+
+// Convert YYYY-MM-DD to dd/mm/yyyy
+function convertFromISODate(isoDate) {
+    const parts = isoDate.trim().split('-');
+    if (parts.length !== 3) {
+        return isoDate; // Return as-is if not in expected format
+    }
+    const year = parts[0];
+    const month = parts[1];
+    const day = parts[2];
+    return `${day}/${month}/${year}`;
+}
+
 function goToStep(step) {
     // Hide all steps
     for (let i = 1; i <= 4; i++) {
@@ -44,9 +68,16 @@ async function createProject() {
         return;
     }
 
-    const globalHolidays = globalHolidaysStr
-        ? globalHolidaysStr.split(',').map(d => d.trim())
-        : [];
+    // Convert holidays from dd/mm/yyyy to YYYY-MM-DD
+    let globalHolidays = [];
+    if (globalHolidaysStr) {
+        try {
+            globalHolidays = globalHolidaysStr.split(',').map(d => convertToISODate(d));
+        } catch (error) {
+            showMessage('Invalid date format in global holidays. Use dd/mm/yyyy (e.g., 25/12/2024)', 'error');
+            return;
+        }
+    }
 
     try {
         const response = await fetch('/api/project', {
@@ -99,7 +130,16 @@ function addEmployee() {
         return;
     }
 
-    const holidays = holidaysStr ? holidaysStr.split(',').map(d => d.trim()) : [];
+    // Convert holidays from dd/mm/yyyy to YYYY-MM-DD
+    let holidays = [];
+    if (holidaysStr) {
+        try {
+            holidays = holidaysStr.split(',').map(d => convertToISODate(d));
+        } catch (error) {
+            showMessage('Invalid date format in employee holidays. Use dd/mm/yyyy (e.g., 26/12/2024)', 'error');
+            return;
+        }
+    }
 
     employees.push({ name, work_pattern: workPattern, holidays });
 
@@ -141,7 +181,9 @@ function editEmployee(idx) {
 
     // Populate the form with employee data
     document.getElementById('employeeName').value = emp.name;
-    document.getElementById('employeeHolidays').value = emp.holidays.join(', ');
+    // Convert holidays from YYYY-MM-DD to dd/mm/yyyy for display
+    const holidaysDisplay = emp.holidays.map(d => convertFromISODate(d)).join(', ');
+    document.getElementById('employeeHolidays').value = holidaysDisplay;
 
     // Check the appropriate work pattern checkboxes
     const checkboxes = document.querySelectorAll('.checkbox-group input[type="checkbox"]');
@@ -587,8 +629,10 @@ async function populateFromImport(data) {
     document.getElementById('projectName').value = projectInfo.name;
     document.getElementById('startDate').value = projectInfo.start_date;
 
+    // Convert global holidays from YYYY-MM-DD to dd/mm/yyyy for display
     if (projectInfo.global_holidays && projectInfo.global_holidays.length > 0) {
-        document.getElementById('globalHolidays').value = projectInfo.global_holidays.join(', ');
+        const globalHolidaysDisplay = projectInfo.global_holidays.map(d => convertFromISODate(d)).join(', ');
+        document.getElementById('globalHolidays').value = globalHolidaysDisplay;
     } else {
         document.getElementById('globalHolidays').value = '';
     }

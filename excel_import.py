@@ -7,6 +7,36 @@ class ExcelImportError(Exception):
     pass
 
 
+def _parse_date_flexible(date_str):
+    """
+    Parse date from either dd/mm/yyyy or YYYY-MM-DD format.
+    Returns date in YYYY-MM-DD format.
+    """
+    if not date_str:
+        return None
+
+    date_str = str(date_str).strip()
+    if not date_str:
+        return None
+
+    # Try dd/mm/yyyy format first (new format)
+    try:
+        parsed_date = datetime.strptime(date_str, '%d/%m/%Y')
+        return parsed_date.strftime('%Y-%m-%d')
+    except ValueError:
+        pass
+
+    # Try YYYY-MM-DD format (backwards compatibility)
+    try:
+        parsed_date = datetime.strptime(date_str, '%Y-%m-%d')
+        return parsed_date.strftime('%Y-%m-%d')
+    except ValueError:
+        pass
+
+    # If both fail, raise error
+    raise ValueError(f"Invalid date format: {date_str}. Expected dd/mm/yyyy or YYYY-MM-DD")
+
+
 def import_from_excel(filepath):
     """
     Import project data from an Excel file.
@@ -70,10 +100,9 @@ def _extract_project_info(ws):
             else:
                 # Try to parse as string
                 try:
-                    parsed_date = datetime.strptime(str(start_date_value), '%Y-%m-%d')
-                    project_info['start_date'] = parsed_date.strftime('%Y-%m-%d')
-                except ValueError:
-                    raise ExcelImportError(f"Invalid start date format: {start_date_value}. Expected YYYY-MM-DD")
+                    project_info['start_date'] = _parse_date_flexible(str(start_date_value))
+                except ValueError as e:
+                    raise ExcelImportError(f"Invalid start date: {e}")
 
     if not project_info['name'] or not project_info['start_date']:
         raise ExcelImportError("Project Info tab must contain Project Name and Start Date")
@@ -141,10 +170,11 @@ def _extract_holidays(ws, project_info, employees):
             holidays_str = str(holidays_str).strip()
             holiday_parts = [h.strip() for h in holidays_str.split(',')]
             for holiday in holiday_parts:
-                # Validate date format
+                # Validate and parse date format
                 try:
-                    datetime.strptime(holiday, '%Y-%m-%d')
-                    holidays.append(holiday)
+                    parsed_holiday = _parse_date_flexible(holiday)
+                    if parsed_holiday:
+                        holidays.append(parsed_holiday)
                 except ValueError:
                     # Skip invalid dates
                     pass
@@ -222,8 +252,7 @@ def _extract_tasks(ws):
                 custom_start_date_str = str(custom_start_date).strip()
                 if custom_start_date_str:
                     try:
-                        parsed_date = datetime.strptime(custom_start_date_str, '%Y-%m-%d')
-                        custom_start_date = parsed_date.strftime('%Y-%m-%d')
+                        custom_start_date = _parse_date_flexible(custom_start_date_str)
                     except ValueError:
                         custom_start_date = None
                 else:

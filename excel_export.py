@@ -4,6 +4,15 @@ from datetime import datetime, timedelta
 from models import Project
 
 
+def _convert_date_to_display(date_str):
+    """Convert YYYY-MM-DD to dd/mm/yyyy format."""
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        return date_obj.strftime("%d/%m/%Y")
+    except (ValueError, AttributeError):
+        return date_str  # Return as-is if conversion fails
+
+
 def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     """Export the project Gantt chart to an Excel file."""
 
@@ -90,9 +99,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
         ws.cell(row=task_idx, column=5).value = task.availability
         ws.cell(row=task_idx, column=6).value = task.contingency_margin
         ws.cell(row=task_idx, column=7).value = task.actual_duration
-        ws.cell(row=task_idx, column=8).value = task.custom_start_date.strftime("%Y-%m-%d") if task.custom_start_date else ""
-        ws.cell(row=task_idx, column=9).value = task.start_date.strftime("%Y-%m-%d") if task.start_date else ""
-        ws.cell(row=task_idx, column=10).value = task.end_date.strftime("%Y-%m-%d") if task.end_date else ""
+        ws.cell(row=task_idx, column=8).value = task.custom_start_date.strftime("%d/%m/%Y") if task.custom_start_date else ""
+        ws.cell(row=task_idx, column=9).value = task.start_date.strftime("%d/%m/%Y") if task.start_date else ""
+        ws.cell(row=task_idx, column=10).value = task.end_date.strftime("%d/%m/%Y") if task.end_date else ""
 
         # Apply borders to fixed columns
         for col in range(1, 11):
@@ -122,9 +131,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     info_ws['A1'] = "Project Name:"
     info_ws['B1'] = project.name
     info_ws['A2'] = "Start Date:"
-    info_ws['B2'] = project.start_date.strftime("%Y-%m-%d")
+    info_ws['B2'] = project.start_date.strftime("%d/%m/%Y")
     info_ws['A3'] = "End Date:"
-    info_ws['B3'] = end_date.strftime("%Y-%m-%d") if end_date else ""
+    info_ws['B3'] = end_date.strftime("%d/%m/%Y") if end_date else ""
     info_ws['A4'] = "Total Duration (days):"
     info_ws['B4'] = (end_date - project.start_date).days + 1 if end_date else 0
 
@@ -199,7 +208,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
 
     if project.global_holidays:
         sorted_global_holidays = sorted(project.global_holidays)
-        holiday_ws.cell(row=2, column=2).value = ", ".join(sorted_global_holidays)
+        # Convert dates to dd/mm/yyyy format
+        formatted_holidays = [_convert_date_to_display(h) for h in sorted_global_holidays]
+        holiday_ws.cell(row=2, column=2).value = ", ".join(formatted_holidays)
     else:
         holiday_ws.cell(row=2, column=2).value = "None"
     holiday_ws.cell(row=2, column=2).border = border
@@ -214,7 +225,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
 
         if employee.holidays:
             sorted_holidays = sorted(employee.holidays)
-            holiday_ws.cell(row=row_idx, column=2).value = ", ".join(sorted_holidays)
+            # Convert dates to dd/mm/yyyy format
+            formatted_holidays = [_convert_date_to_display(h) for h in sorted_holidays]
+            holiday_ws.cell(row=row_idx, column=2).value = ", ".join(formatted_holidays)
         else:
             holiday_ws.cell(row=row_idx, column=2).value = "None"
         holiday_ws.cell(row=row_idx, column=2).border = border
