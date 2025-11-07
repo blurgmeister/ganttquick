@@ -27,6 +27,86 @@ function convertToISODate(ddmmyyyy) {
     return `${year}-${month}-${day}`;
 }
 
+// Parse date ranges and individual dates
+function parseDateRanges(dateInput) {
+    /**
+     * Parse date ranges and individual dates from a string.
+     *
+     * Accepts formats:
+     * - Individual dates: dd/mm/yyyy
+     * - Date ranges: dd/mm/yyyy-dd/mm/yyyy or dd/mm/yyyy - dd/mm/yyyy
+     * - Multiple entries separated by commas
+     *
+     * Returns an array of dates in YYYY-MM-DD format.
+     */
+    if (!dateInput || !dateInput.trim()) {
+        return [];
+    }
+
+    const resultDates = [];
+
+    // Split by commas
+    const entries = dateInput.split(',').map(e => e.trim());
+
+    for (const entry of entries) {
+        if (!entry) continue;
+
+        // Check if this is a date range (contains a dash)
+        // Pattern: dd/mm/yyyy - dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy
+        const rangePattern = /(\d{1,2}\/\d{1,2}\/\d{4})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4})/;
+        const match = entry.match(rangePattern);
+
+        if (match) {
+            // This is a date range
+            const startStr = match[1];
+            const endStr = match[2];
+
+            try {
+                // Parse start and end dates
+                const startParts = startStr.split('/');
+                const endParts = endStr.split('/');
+
+                const startDate = new Date(
+                    parseInt(startParts[2]),
+                    parseInt(startParts[1]) - 1,
+                    parseInt(startParts[0])
+                );
+                const endDate = new Date(
+                    parseInt(endParts[2]),
+                    parseInt(endParts[1]) - 1,
+                    parseInt(endParts[0])
+                );
+
+                if (startDate > endDate) {
+                    throw new Error(`Start date ${startStr} is after end date ${endStr}`);
+                }
+
+                // Generate all dates in the range
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const isoDate = convertToISODate(
+                        `${currentDate.getDate().toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getFullYear()}`
+                    );
+                    resultDates.push(isoDate);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+            } catch (error) {
+                throw new Error(`Invalid date range '${entry}': ${error.message}`);
+            }
+        } else {
+            // This is a single date
+            try {
+                const isoDate = convertToISODate(entry);
+                resultDates.push(isoDate);
+            } catch (error) {
+                throw new Error(`Invalid date format '${entry}'. Expected dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy`);
+            }
+        }
+    }
+
+    return resultDates;
+}
+
 // Convert YYYY-MM-DD to dd/mm/yyyy
 function convertFromISODate(isoDate) {
     const parts = isoDate.trim().split('-');
@@ -68,13 +148,13 @@ async function createProject() {
         return;
     }
 
-    // Convert holidays from dd/mm/yyyy to YYYY-MM-DD
+    // Parse holidays (supports individual dates and date ranges)
     let globalHolidays = [];
     if (globalHolidaysStr) {
         try {
-            globalHolidays = globalHolidaysStr.split(',').map(d => convertToISODate(d));
+            globalHolidays = parseDateRanges(globalHolidaysStr);
         } catch (error) {
-            showMessage('Invalid date format in global holidays. Use dd/mm/yyyy (e.g., 25/12/2024)', 'error');
+            showMessage(`Invalid date format in global holidays: ${error.message}`, 'error');
             return;
         }
     }
@@ -130,13 +210,13 @@ function addEmployee() {
         return;
     }
 
-    // Convert holidays from dd/mm/yyyy to YYYY-MM-DD
+    // Parse holidays (supports individual dates and date ranges)
     let holidays = [];
     if (holidaysStr) {
         try {
-            holidays = holidaysStr.split(',').map(d => convertToISODate(d));
+            holidays = parseDateRanges(holidaysStr);
         } catch (error) {
-            showMessage('Invalid date format in employee holidays. Use dd/mm/yyyy (e.g., 26/12/2024)', 'error');
+            showMessage(`Invalid date format in employee holidays: ${error.message}`, 'error');
             return;
         }
     }

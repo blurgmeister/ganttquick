@@ -1,5 +1,6 @@
 from openpyxl import load_workbook
-from datetime import datetime
+from datetime import datetime, timedelta
+import re
 
 
 class ExcelImportError(Exception):
@@ -35,6 +36,69 @@ def _parse_date_flexible(date_str):
 
     # If both fail, raise error
     raise ValueError(f"Invalid date format: {date_str}. Expected dd/mm/yyyy or YYYY-MM-DD")
+
+
+def _parse_date_ranges(date_input):
+    """
+    Parse date ranges and individual dates from a string.
+
+    Accepts formats:
+    - Individual dates: dd/mm/yyyy
+    - Date ranges: dd/mm/yyyy-dd/mm/yyyy or dd/mm/yyyy - dd/mm/yyyy
+    - Multiple entries separated by commas
+
+    Returns a list of dates in YYYY-MM-DD format.
+    """
+    if not date_input or not str(date_input).strip():
+        return []
+
+    date_input = str(date_input).strip()
+    result_dates = []
+
+    # Split by commas
+    entries = [entry.strip() for entry in date_input.split(',')]
+
+    for entry in entries:
+        if not entry:
+            continue
+
+        # Check if this is a date range (contains a dash)
+        # Pattern: dd/mm/yyyy - dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy
+        range_pattern = r'(\d{1,2}/\d{1,2}/\d{4})\s*-\s*(\d{1,2}/\d{1,2}/\d{4})'
+        match = re.match(range_pattern, entry)
+
+        if match:
+            # This is a date range
+            start_str = match.group(1)
+            end_str = match.group(2)
+
+            try:
+                # Parse start and end dates
+                start_date = datetime.strptime(start_str, '%d/%m/%Y')
+                end_date = datetime.strptime(end_str, '%d/%m/%Y')
+
+                if start_date > end_date:
+                    raise ValueError(f"Start date {start_str} is after end date {end_str}")
+
+                # Generate all dates in the range
+                current_date = start_date
+                while current_date <= end_date:
+                    result_dates.append(current_date.strftime('%Y-%m-%d'))
+                    current_date += timedelta(days=1)
+            except ValueError as e:
+                # Skip invalid date ranges but continue processing
+                pass
+        else:
+            # This is a single date
+            try:
+                parsed_date = _parse_date_flexible(entry)
+                if parsed_date:
+                    result_dates.append(parsed_date)
+            except ValueError:
+                # Skip invalid dates but continue processing
+                pass
+
+    return result_dates
 
 
 def import_from_excel(filepath):
@@ -164,20 +228,10 @@ def _extract_holidays(ws, project_info, employees):
         emp_name = str(emp_name).strip()
         holidays_str = ws.cell(row=row, column=2).value
 
-        # Parse holidays (comma-separated dates)
+        # Parse holidays (supports individual dates and date ranges)
         holidays = []
         if holidays_str and str(holidays_str).strip().upper() != 'NONE':
-            holidays_str = str(holidays_str).strip()
-            holiday_parts = [h.strip() for h in holidays_str.split(',')]
-            for holiday in holiday_parts:
-                # Validate and parse date format
-                try:
-                    parsed_holiday = _parse_date_flexible(holiday)
-                    if parsed_holiday:
-                        holidays.append(parsed_holiday)
-                except ValueError:
-                    # Skip invalid dates
-                    pass
+            holidays = _parse_date_ranges(holidays_str)
 
         # Assign to global or employee-specific
         if emp_name.upper() == 'GLOBAL':

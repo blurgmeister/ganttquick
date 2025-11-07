@@ -1,5 +1,66 @@
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Set
+import re
+
+
+def parse_date_ranges(date_input: str) -> Set[str]:
+    """
+    Parse date ranges and individual dates from a string.
+
+    Accepts formats:
+    - Individual dates: dd/mm/yyyy
+    - Date ranges: dd/mm/yyyy-dd/mm/yyyy or dd/mm/yyyy - dd/mm/yyyy
+    - Multiple entries separated by commas
+
+    Returns a set of dates in YYYY-MM-DD format.
+    """
+    if not date_input or not date_input.strip():
+        return set()
+
+    result_dates = set()
+
+    # Split by commas
+    entries = [entry.strip() for entry in date_input.split(',')]
+
+    for entry in entries:
+        if not entry:
+            continue
+
+        # Check if this is a date range (contains a dash)
+        # Pattern: dd/mm/yyyy - dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy
+        range_pattern = r'(\d{1,2}/\d{1,2}/\d{4})\s*-\s*(\d{1,2}/\d{1,2}/\d{4})'
+        match = re.match(range_pattern, entry)
+
+        if match:
+            # This is a date range
+            start_str = match.group(1)
+            end_str = match.group(2)
+
+            try:
+                # Parse start and end dates
+                start_date = datetime.strptime(start_str, '%d/%m/%Y')
+                end_date = datetime.strptime(end_str, '%d/%m/%Y')
+
+                if start_date > end_date:
+                    raise ValueError(f"Start date {start_str} is after end date {end_str}")
+
+                # Generate all dates in the range
+                current_date = start_date
+                while current_date <= end_date:
+                    result_dates.add(current_date.strftime('%Y-%m-%d'))
+                    current_date += timedelta(days=1)
+            except ValueError as e:
+                raise ValueError(f"Invalid date range '{entry}': {str(e)}")
+        else:
+            # This is a single date
+            try:
+                # Try dd/mm/yyyy format
+                date_obj = datetime.strptime(entry, '%d/%m/%Y')
+                result_dates.add(date_obj.strftime('%Y-%m-%d'))
+            except ValueError:
+                raise ValueError(f"Invalid date format '{entry}'. Expected dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy")
+
+    return result_dates
 
 
 class Employee:
