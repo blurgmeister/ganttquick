@@ -44,8 +44,8 @@
                         <input type="date" id="startDate" required>
                     </div>
                     <div class="form-group">
-                        <label>Global Holidays (comma-separated, dd/mm/yyyy):</label>
-                        <input type="text" id="globalHolidays" placeholder="25/12/2024, 01/01/2025">
+                        <label>Global Holidays (comma-separated dates or ranges, dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy):</label>
+                        <input type="text" id="globalHolidays" placeholder="25/12/2024, 27/12/2024-30/12/2024">
                     </div>
                     <button onclick="createProject()" class="btn btn-primary">Create Project</button>
                     <button onclick="goToStep(2)" class="btn btn-secondary" id="nextToStep2" style="display:none;">Next: Add Employees</button>
@@ -73,8 +73,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Individual Holidays (comma-separated, dd/mm/yyyy):</label>
-                    <input type="text" id="employeeHolidays" placeholder="26/12/2024">
+                    <label>Individual Holidays (comma-separated dates or ranges, dd/mm/yyyy or dd/mm/yyyy-dd/mm/yyyy):</label>
+                    <input type="text" id="employeeHolidays" placeholder="26/12/2024, 02/01/2025-05/01/2025">
                 </div>
                 <button onclick="addEmployee()" class="btn btn-secondary">Add Employee</button>
                 <div class="button-group" style="margin-top: 20px;">

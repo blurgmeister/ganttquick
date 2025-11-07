@@ -24,7 +24,9 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
     header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
     header_font = Font(color="FFFFFF", bold=True)
     task_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    task_font = Font(color="4472C4")  # Font color matches task background
     holiday_fill = PatternFill(start_color="FFC107", end_color="FFC107", fill_type="solid")
+    holiday_font = Font(color="FFC107")  # Font color matches holiday background
     border = Border(
         left=Side(style='thin'),
         right=Side(style='thin'),
@@ -119,10 +121,12 @@ def export_to_excel(project: Project, filename: str = "gantt_chart.xlsx"):
             date_str = date.strftime("%Y-%m-%d")
             if date_str in working_dates_set:
                 cell.fill = task_fill
+                cell.font = task_font
                 cell.value = 1
                 cell.alignment = Alignment(horizontal="center", vertical="center")
             elif date_str in holiday_dates_set:
                 cell.fill = holiday_fill
+                cell.font = holiday_font
                 cell.value = 0
                 cell.alignment = Alignment(horizontal="center", vertical="center")
 
